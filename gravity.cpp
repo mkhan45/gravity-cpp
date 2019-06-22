@@ -9,7 +9,7 @@
 
 using namespace std;
 
-const float G = 10.0;
+const float G = 1.0;
 
 float distance(float x1, float y1, float x2, float y2){
     float dx_sqr = pow(x2 - x1, 2);
@@ -67,7 +67,7 @@ int main(){
 
             Body current = bodies[i];
 
-            cout << "x: " << current.x << " y: " << current.y << "\n";
+            cout << "Body #" << i << " -> x: " << current.x << " y: " << current.y << "\n";
 
             for(int j = 0; j < bodies.size(); j++){
                 Body other = bodies[j];
@@ -78,13 +78,11 @@ int main(){
                 }
             }
 
-            current.v_x += accel_x;
-            current.v_y += accel_y;
+            bodies[i].v_x += accel_x;
+            bodies[i].v_y += accel_y;
 
-            current.x += current.v_x + (accel_x/2);
-            current.y += current.v_y + (accel_y/2);
-
-            bodies[i] = current;
+            bodies[i].x += bodies[i].v_x + (accel_x/2);
+            bodies[i].y += bodies[i].v_y + (accel_y/2);
 
             /* cout << "After x: " << current.x << " After y: " << current.y << "\n"; */
         }
