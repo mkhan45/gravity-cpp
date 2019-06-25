@@ -1,11 +1,10 @@
 #include <iostream>
-#include <string>
-#include <string.h>
-#include <algorithm>
 #include <vector>
 #include <math.h>
 #include <tuple>
 #include <unistd.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL2_gfxPrimitives.h>
 
 using namespace std;
 
@@ -60,33 +59,53 @@ int main(){
     bodies.push_back(Body (5.0, 25.0, 100.0, 100.0));
     bodies.push_back(Body (15.0, 125.0, 600.0, 600.0));
 
-    while(true){
-        for(int i = 0; i < bodies.size(); i++){
-            float accel_x = 0.0;
-            float accel_y = 0.0;
+    SDL_Window* window = NULL;
+    SDL_Surface* screenSurface = NULL;
+    SDL_Renderer* renderer = NULL;
 
-            Body current = bodies[i];
+    if( SDL_Init( SDL_INIT_VIDEO ) < 0 )
+        printf( "SDL could not initialize! SDL_Error: %s\n", SDL_GetError() ); 
+    else{
+        renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
-            cout << "Body #" << i << " -> x: " << current.x << " y: " << current.y << "\n";
+        int count = 0;
 
-            for(int j = 0; j < bodies.size(); j++){
-                Body other = bodies[j];
-                if(distance(current.x, current.y, other.x, other.y) >= current.radius + other.radius){
-                    tuple<float, float> accel = other.accel_vector(current.x, current.y);
-                    accel_x += get<0>(accel);
-                    accel_y += get<1>(accel);
+        while(count < 1000){
+            for(int i = 0; i < bodies.size(); i++){
+                float accel_x = 0.0;
+                float accel_y = 0.0;
+
+                Body current = bodies[i];
+
+                cout << "Body #" << i << " -> x: " << current.x << " y: " << current.y << "\n";
+
+                for(int j = 0; j < bodies.size(); j++){
+                    Body other = bodies[j];
+                    if(distance(current.x, current.y, other.x, other.y) >= current.radius + other.radius){
+                        tuple<float, float> accel = other.accel_vector(current.x, current.y);
+                        accel_x += get<0>(accel);
+                        accel_y += get<1>(accel);
+                    }
                 }
+
+                SDL_RenderPresent(renderer);
+                SDL_UpdateWindowSurface(window);
+
+                SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+                SDL_RenderClear(renderer);
+
+                bodies[i].v_x += accel_x;
+                bodies[i].v_y += accel_y;
+
+                bodies[i].x += bodies[i].v_x + (accel_x/2);
+                bodies[i].y += bodies[i].v_y + (accel_y/2);
+
+                filledCircleRGBA(renderer, current.x, current.y, current.radius, 255, 255, 255, 255);
             }
 
-            bodies[i].v_x += accel_x;
-            bodies[i].v_y += accel_y;
+            count++;
 
-            bodies[i].x += bodies[i].v_x + (accel_x/2);
-            bodies[i].y += bodies[i].v_y + (accel_y/2);
-
-            /* cout << "After x: " << current.x << " After y: " << current.y << "\n"; */
+            usleep(16666);
         }
-
-        usleep(16666);
     }
 }
