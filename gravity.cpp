@@ -9,6 +9,8 @@
 using namespace std;
 
 const float G = 1.0;
+const int SCREEN_WIDTH = 800.0;
+const int SCREEN_HEIGHT = 800.0;
 
 float distance(float x1, float y1, float x2, float y2){
     float dx_sqr = pow(x2 - x1, 2);
@@ -55,9 +57,13 @@ tuple<float, float> Body::accel_vector(float other_x, float other_y){
 int main(){
     vector<Body> bodies;
 
-    bodies.push_back(Body (5.0, 5.0, 10.0, 10.0));
-    bodies.push_back(Body (5.0, 25.0, 100.0, 100.0));
-    bodies.push_back(Body (15.0, 125.0, 600.0, 600.0));
+    //radius, mass, x, y
+    bodies.push_back(Body (50.0, 800.0, 400.0, 400.0)); //big planet
+
+    Body satellite = Body(5.0, 1.0, 750.0, 400.0);
+    satellite.v_y = -1.5;
+
+    bodies.push_back(satellite);
 
     SDL_Window* window = NULL;
     SDL_Surface* screenSurface = NULL;
@@ -66,26 +72,42 @@ int main(){
     if( SDL_Init( SDL_INIT_VIDEO ) < 0 )
         printf( "SDL could not initialize! SDL_Error: %s\n", SDL_GetError() ); 
     else{
-        renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+        window = SDL_CreateWindow("SDL Window",
+                SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+                SCREEN_WIDTH, SCREEN_HEIGHT,
+                SDL_WINDOW_SHOWN);
+        if (window == NULL){
+            printf("Error creating window: %s\n", SDL_GetError());
+        }else{
+            renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
-        int count = 0;
+            int count = 0;
 
-        while(count < 1000){
-            for(int i = 0; i < bodies.size(); i++){
-                float accel_x = 0.0;
-                float accel_y = 0.0;
+            while(count < 1000){
+                for(int i = 0; i < bodies.size(); i++){
+                    float accel_x = 0.0;
+                    float accel_y = 0.0;
 
-                Body current = bodies[i];
+                    Body current = bodies[i];
 
-                cout << "Body #" << i << " -> x: " << current.x << " y: " << current.y << "\n";
+                    /* cout << "Body #" << i << " -> x: " << current.x << " y: " << current.y << "\n"; */
 
-                for(int j = 0; j < bodies.size(); j++){
-                    Body other = bodies[j];
-                    if(distance(current.x, current.y, other.x, other.y) >= current.radius + other.radius){
-                        tuple<float, float> accel = other.accel_vector(current.x, current.y);
-                        accel_x += get<0>(accel);
-                        accel_y += get<1>(accel);
+                    for(int j = 0; j < bodies.size(); j++){
+                        Body other = bodies[j];
+                        if(distance(current.x, current.y, other.x, other.y) >= current.radius + other.radius){
+                            tuple<float, float> accel = other.accel_vector(current.x, current.y);
+                            accel_x += get<0>(accel);
+                            accel_y += get<1>(accel);
+                        }
                     }
+
+                    bodies[i].v_x += accel_x;
+                    bodies[i].v_y += accel_y;
+
+                    bodies[i].x += bodies[i].v_x + (accel_x/2);
+                    bodies[i].y += bodies[i].v_y + (accel_y/2);
+
+                    filledCircleRGBA(renderer, current.x, current.y, current.radius, 255, 255, 255, 255);
                 }
 
                 SDL_RenderPresent(renderer);
@@ -94,18 +116,16 @@ int main(){
                 SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
                 SDL_RenderClear(renderer);
 
-                bodies[i].v_x += accel_x;
-                bodies[i].v_y += accel_y;
+                count++;
 
-                bodies[i].x += bodies[i].v_x + (accel_x/2);
-                bodies[i].y += bodies[i].v_y + (accel_y/2);
-
-                filledCircleRGBA(renderer, current.x, current.y, current.radius, 255, 255, 255, 255);
+                usleep(16666);
             }
-
-            count++;
-
-            usleep(16666);
         }
     }
+
+    SDL_DestroyWindow(window);
+
+    SDL_Quit();
+
+    return 0;
 }
