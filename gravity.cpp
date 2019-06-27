@@ -57,13 +57,14 @@ tuple<float, float> Body::accel_vector(float other_x, float other_y){
 int main(){
     vector<Body> bodies;
 
-    //radius, mass, x, y
+    //Body (radius, mass, x, y)
     bodies.push_back(Body (50.0, 800.0, 400.0, 400.0)); //big planet
 
     Body satellite = Body(5.0, 1.0, 750.0, 400.0);
     satellite.v_y = -1.5;
 
     bodies.push_back(satellite);
+
 
     SDL_Window* window = NULL;
     SDL_Surface* screenSurface = NULL;
@@ -81,10 +82,18 @@ int main(){
         }else{
             renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
-            int count = 0;
+            SDL_Event e;
 
-            while(count < 1000){
+            while(true){
                 for(int i = 0; i < bodies.size(); i++){
+
+                    SDL_PollEvent(&e);
+                    if(e.type == SDL_QUIT){
+                        SDL_DestroyWindow(window);
+                        SDL_Quit();
+                        return 0;
+                    }
+
                     float accel_x = 0.0;
                     float accel_y = 0.0;
 
@@ -115,8 +124,6 @@ int main(){
 
                 SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
                 SDL_RenderClear(renderer);
-
-                count++;
 
                 usleep(16666);
             }
